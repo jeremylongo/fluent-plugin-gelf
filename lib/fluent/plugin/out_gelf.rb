@@ -9,6 +9,8 @@ class GELFOutput < BufferedOutput
   config_param :host, :string, :default => nil
   config_param :port, :integer, :default => 12201
   config_param :protocol, :string, :default => 'udp'
+  config_param :tls_cert, :string, :default => nil
+  config_param :tls_key, :string, :default => nil
 
   def initialize
     super
@@ -32,8 +34,9 @@ class GELFOutput < BufferedOutput
   def start
     super
 
-    @conn = GELF::Notifier.new(@host, @port, 'WAN', {:facility => 'fluentd', :protocol => @proto})
-
+    if @tls_cert then @conn = GELF::Notifier.new(@host, @port, 'WAN', {:facility => 'fluentd', :protocol => @proto, :tls => {:no_default_ca => true, :cert => @tls_cert, :key => @tls_key}})
+    else @conn = GELF::Notifier.new(@host, @port, 'WAN', {:facility => 'fluentd', :protocol => @proto})
+    end
     # Errors are not coming from Ruby so we use direct mapping
     @conn.level_mapping = 'direct'
     # file and line from Ruby are in this class, not relevant
